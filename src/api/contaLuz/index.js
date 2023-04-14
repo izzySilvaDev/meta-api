@@ -307,8 +307,7 @@ router.post('/acompanhamento', (req, res) => {
 })
 
 router.get('/proposal/search/:id', async (req, res) => {
-	const { id } = req.params;
-	
+	const { id } = req.params;	
 	try {
 
 		if(!id) {
@@ -320,9 +319,10 @@ router.get('/proposal/search/:id', async (req, res) => {
 
 		if(data.success) {
 			const resData = { 
-				id: data.data.proposta.id,
-				status: data.data.proposta.situacaoDescricao,
-				name: data.data.proposta.cliente.nome
+				id: data?.data?.proposta?.id,
+				status: data?.data.proposta?.situacaoDescricao,
+				name: data?.data?.proposta?.cliente?.nome,
+                motivo: data?.data?.proposta?.motivo,
 			}
 			return res.json(resData);
 		} else {
@@ -357,7 +357,7 @@ router.post('/mail', multer(multerConfig).single('image'), async (req, res) => {
 		compahia,
 		valor,
 		file 
-	});
+	} , { attempts: 5, backoff: delay });
 
 	return res.json({ ok: true });
 })
@@ -402,8 +402,6 @@ async function searchProposalByID({ proposalID = '' }) {
                 'Authorization': `Bearer ${apiCredentials?.token}`
             }
         });
-
-		console.log(data);
 
 		return data;        
     } catch (error) {
