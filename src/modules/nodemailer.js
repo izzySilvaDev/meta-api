@@ -10,6 +10,7 @@ const pass = process.env.MAIL_PASS;
 const transport = nodemailer.createTransport({
   host,
   port,
+  secure: false,  
   auth: {
     user,
     pass,

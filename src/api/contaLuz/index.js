@@ -176,9 +176,10 @@ router.post('/create-proposal', async (req, res) => {
 
     } catch (error) {
         console.log(formatedData);
-		console.log(error);        
+		console.log(error.message);
         if (error.response) {
-			res.status(error.response.status);			
+			res.status(error.response.status);
+            console.log(error?.response?.data?.errors);
             return res.json(error.response.data)
         }
         res.status(400);        
