@@ -15,7 +15,7 @@ const transport = nodemailer.createTransport({
     user,
     pass,
   },
-});
+}); 
 
 transport.use(
   'compile',
