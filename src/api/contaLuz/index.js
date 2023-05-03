@@ -2,15 +2,9 @@ const express = require('express');
 const axios = require('axios');
 const multer = require('multer');
 const { uploadQueue, updateUserQueue, sendEmailQueue } = require('../../lib/Queue');
-const Mail = require('../../modules/nodemailer');
 
 const multerConfig = require('../../config/multer');
 const cities = require('../../../cities.json');
-
-const FormData = require('form-data');
-
-const fs = require('fs');
-
 
 const { 
     getToken,
@@ -340,9 +334,9 @@ router.get('/proposal/search/:id', async (req, res) => {
 
 })
 
-router.post('/mail', multer(multerConfig).single('image'), async (req, res) => {
-	const { nome, email, cep, city: cidade, compahia, cpf, state: estado, valor, whatsApp  } = req.body
-	const file = req.file;
+router.post('/mail', multer(multerConfig).array('images', 3), async (req, res) => {
+	const { nome, email, cep, cidade, compahia, cpf, estado, valor, whatsApp  } = req.body
+	const files = req.files;
 	const rendaID = req.body['fonte-de-renda'];	
 	const renda = rendaMap[rendaID];
 
@@ -358,7 +352,7 @@ router.post('/mail', multer(multerConfig).single('image'), async (req, res) => {
 		renda,
 		compahia,
 		valor,
-		file 
+		files 
 	} , { attempts: 5, backoff: delay });
 
 	return res.json({ ok: true });

@@ -69,17 +69,21 @@ uploadImageToApiQueue.on('failed', (job, error) => {
 
 sendEmailQueue.on('completed', (job) => {
     console.log('email job completed', job.data);
-    
-    fs.unlink(job.data.file.path, (error) => {
-		if (error) { 
-			console.error(error);
-			return;
-		}
-	});
+
+    if(job.data.files) {
+        job.data.files.forEach(file => {
+            fs.unlink(file.path, (error) => {
+                if (error) { 
+                    console.error(error);
+                    return;
+                }            
+            });
+        });
+    }    
 })
 
 sendEmailQueue.on('failed', (job, error) => {
-    console.log('email job failed', error);
+    console.log('email job failed', error, job.data);
 })
 
 

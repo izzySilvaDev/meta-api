@@ -1,7 +1,7 @@
 require('dotenv').config();
 const Mail = require('../modules/nodemailer');
 
-async function sendMail({ nome, cpf, nascimento, email, whatsApp, estado, cidade, cep, renda, compahia, valor, file } = {}) {
+async function sendMail({ nome, cpf, nascimento, email, whatsApp, estado, cidade, cep, renda, compahia, valor, files } = {}) {
 
     const mailData = {
         from: 'contato@metasimples.com.br',
@@ -11,11 +11,8 @@ async function sendMail({ nome, cpf, nascimento, email, whatsApp, estado, cidade
 		context: { nome, cpf, nascimento, email, whatsApp, estado, cidade, cep, renda, compahia, valor }
     }
 
-    if(file) {
-        mailData.attachments = [{
-			filename: file.originalname,
-			path: file.path
-	  	}]
+    if(files) {
+        mailData.attachments = files.map((file) => ({ filename: file.originalname, path: file.path }));
     }
 
     await Mail.sendMail(mailData);
