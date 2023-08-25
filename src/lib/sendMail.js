@@ -5,7 +5,7 @@ async function sendMail({ nome, cpf, nascimento, email, whatsApp, estado, cidade
 
     const mailData = {
         from: 'contato@metasimples.com.br',
-		to: 'izaiascrs@gmail.com',
+		to: 'contato@metasimples.com.br',
 		template: 'newUser',
 		subject: 'Nova simulação',
 		context: { nome, cpf, nascimento, email, whatsApp, estado, cidade, cep, renda, compahia, valor }
