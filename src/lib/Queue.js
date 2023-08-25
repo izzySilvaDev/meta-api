@@ -6,6 +6,7 @@ const ImageUploadJob = require('../jobs/ImageUploadJob');
 const updateUserJob = require('../jobs/updateUserJob');
 const uploadImageToApiJob = require('../jobs/uploadImageToApiJob');
 const sendEmailJob = require('../jobs/sendEmailJob');
+const sendProposalToAnaliseJob = require('../jobs/SendProposalToAnaliseJob')
 
 const redisConfig = {
     redis: {
@@ -23,6 +24,8 @@ const updateUserQueue = new Queue(updateUserJob.key, redisConfig);
 const uploadImageToApiQueue = new Queue(uploadImageToApiJob.key, redisConfig);
 
 const sendEmailQueue = new Queue(sendEmailJob.key, redisConfig);
+
+const sendProposalToAnaliseQueue = new Queue(sendProposalToAnaliseJob.key, redisConfig);
 
 const delay = 1000 * 20;
 
@@ -86,5 +89,14 @@ sendEmailQueue.on('failed', (job, error) => {
     console.log('email job failed', error, job.data);
 })
 
+sendProposalToAnaliseQueue.on('completed', (job) => {
+    console.log('send Proposal To Analise job completed', job.data?.id);
+})
 
-module.exports = { uploadQueue, updateUserQueue, uploadImageToApiQueue, sendEmailQueue };
+sendProposalToAnaliseQueue.on('failed', (job, error) => {
+    console.log(error.message);
+    console.log('send Proposal To Analise job failed!', job.data?.id);
+})
+
+
+module.exports = { uploadQueue, updateUserQueue, uploadImageToApiQueue, sendEmailQueue, sendProposalToAnaliseQueue };

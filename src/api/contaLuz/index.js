@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const multer = require('multer');
-const { uploadQueue, updateUserQueue, sendEmailQueue } = require('../../lib/Queue');
+const { uploadQueue, updateUserQueue, sendEmailQueue, sendProposalToAnaliseQueue } = require('../../lib/Queue');
 
 const multerConfig = require('../../config/multer');
 const cities = require('../../../cities.json');
@@ -40,6 +40,13 @@ const rendaMap = {
 	7: "Empresário / Proprietário",
 	8: "Outros",
 }
+
+const unidade = {    
+    nomeVendedor: process.env.NOME_VENDEDOR, 
+    cpfVendedor: process.env.CPF_VENDEDOR, 
+    celularVendedor: process.env.CELULAR_VENDEDOR     
+}
+
 
 router.get('/', (req, res) => {
     return res.json({ message: 'conta luz router ok!' });
@@ -136,10 +143,9 @@ router.post('/citie-available', async (req, res) => {
         return res.json(data);
 
     } catch (error) {
-        // console.log(error.message);
-        // console.log(error.response);
-        // return res.json({ message: 'Error' });
-        return res.json(mockDataCitieAvailable)
+        console.log(error.message);
+        console.log(error.response);
+        return res.json({ message: 'Error' });
     }
 })
 
@@ -200,8 +206,7 @@ router.get('/offer/:id', async (req, res) => {
             return res.json(error.response.data)
         }		
         res.status(400);        
-        return res.json({ message: 'Error' });
-        // return res.json(offerMockData)
+        return res.json({ message: 'Error' });        
     }
 });
 
@@ -358,6 +363,92 @@ router.post('/mail', multer(multerConfig).array('images', 3), async (req, res) =
 	return res.json({ ok: true });
 })
 
+router.get('/proposal/:id', async (req, res) => {
+    const { id } = req.params;	
+
+    try {
+
+		if(!id) {
+			res.status(404);
+			return res.json({ message: 'Proposal not found!'});
+		}
+
+		const data = await getProposalByID({ proposalID: id });
+
+		if(data.success) {
+            return res.json(data);		
+		} else {
+			res.status(404);
+			return res.json({ message: 'Proposal not found!' })
+		}
+
+	} catch (error) {
+		console.log(error);
+		res.status(500);
+		return res.json({ error: 'Something went wrong'});
+	}
+})
+
+router.get('/endereco/cidade/:id', async (req, res) => {
+    const { id } = req.params;	
+
+    try {
+		if(!id) {
+			res.status(404);
+			return res.json({ message: 'City not found!'});
+		}
+
+		const data = await getCity({ cityID: id });
+
+		if(data.success) {
+            return res.json(data);		
+		} else {
+			res.status(404);
+			return res.json({ message: 'City not found!' })
+		}
+
+	} catch (error) {
+		console.log(error);
+		res.status(500);
+		return res.json({ error: 'Something went wrong'});
+	}
+})
+
+router.post('/proposal/search-by-cpf', async (req, res) => {
+    const { cpf } = req.body;	
+
+    if(!cpf) {
+        res.status(404)
+        return res.json({ message: 'Invalid CPF!'});
+    }
+
+    try {
+        const data = await searchByCPF({ cpf });
+        console.log({data});
+        if(!data.success) {
+            res.status(404);
+            return res.json({ message: 'Something went wrong!'})
+        }
+
+        const { id, situacaoDescricao: status, cliente: name, situacaoId } = data.data.itens[0];        
+        return res.json({ id, status, name, situacaoId });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(404);
+        return res.json(error);
+    }
+
+})
+
+router.post('/proposal/send-to-analise', async (req, res) => {
+    const data = req.body;
+    data.unidade = unidade;
+    
+    // sendProposalToAnaliseQueue.add(data, { attempts: 2, backoff: delay });
+    return res.json({ ok: true, data });
+})
+
 async function contaLuzGetValues ({ propostaId }) {
 
     try {
@@ -383,14 +474,7 @@ async function contaLuzGetValues ({ propostaId }) {
 }
 
 async function searchProposalByID({ proposalID = '' }) {
-	if(!apiCredentials?.token) {
-        await getToken(apiCredentials);
-    }
-
-    const currentDay = new Date()
-    const expiresDay = new Date(apiCredentials.expires)
-
-    if(currentDay >= expiresDay) await getToken(apiCredentials);
+	await verifyToken();
 
 	try {
         const { data } = await axios.get(`${process.env.CREFAZ_BASE_URL}/api/proposta/${proposalID}`, {
@@ -404,6 +488,71 @@ async function searchProposalByID({ proposalID = '' }) {
         console.log(error.message);
         return error;        
     }
+}
+
+async function getProposalByID({ proposalID = '' }) {
+	await verifyToken();
+
+	try {
+        const { data } = await axios.get(`https://api.crefazon.com.br/api/proposta/entrada-mesa-de-credito/${proposalID}`, {
+            headers: {
+                'Authorization': `Bearer ${apiCredentials?.token}`
+            }
+        });
+
+		return data;        
+    } catch (error) {
+        console.log(error.message);
+        return error;        
+    }
+}
+
+async function getCity({ cityID = '' }) {
+    await verifyToken();
+
+	try {
+        const { data } = await axios.get(`https://api.crefazon.com.br/api/endereco/Cidade/${cityID}`, {
+            headers: {
+                'Authorization': `Bearer ${apiCredentials?.token}`
+            }
+        });
+
+		return data;        
+    } catch (error) {
+        console.log(error.message);
+        return error;        
+    }
+}
+
+async function searchByCPF({ cpf = ''}) {
+    await verifyToken();
+
+    const searchData = {
+        "pagina": 1,
+        "filtroDinamico": cpf,	
+        "ordenacaoAsc": false
+    }
+
+    try {
+        const { data } = await axios.post(`https://api.crefazon.com.br/api/proposta/acompanhamento`, searchData, {
+            headers: {
+                'Authorization': `Bearer ${apiCredentials?.token}`
+            }
+        });
+        return data;
+    } catch (error) {
+        console.log(error);
+        return error;
+    }    
+}
+
+async function verifyToken() {
+    if(!apiCredentials?.token) {
+        await getToken(apiCredentials);
+    }
+    const currentDay = new Date()
+    const expiresDay = new Date(apiCredentials.expires);
+    if(currentDay >= expiresDay) await getToken(apiCredentials);
 }
 
 module.exports = router;

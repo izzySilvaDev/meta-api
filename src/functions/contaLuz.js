@@ -12,7 +12,7 @@ async function getToken(apiCredentials) {
     }
 
     try {
-        const { data } = await axios.post(`${process.env.CREFAZ_BASE_URL}/api/usuario/login`, userCredentials);
+        const { data } = await axios.post(`https://api.crefazon.com.br/api/usuario/login`, userCredentials);
         const expiresDay = data.data.expires.split('T')[0];
         apiCredentials.token = data.data.token;
         apiCredentials.expires = expiresDay.replace(/-/g, '/');
