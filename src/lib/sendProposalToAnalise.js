@@ -8,14 +8,12 @@ async function sendProposalToAnalise(userData) {
     const currentDay = new Date();
     const expiresDay = new Date(apiCredentials.expires);
     if(currentDay >= expiresDay) await getToken(apiCredentials);
-
-    console.log(userData);
-
-    // await axios.put(`${process.env.CREFAZ_BASE_URL}/api/Proposta/${userData.id}`, userData, {
-    //     headers: {
-    //         'Authorization': `Bearer ${apiCredentials?.token}`
-    //     }
-    // });
+    
+    await axios.put(`${process.env.CREFAZ_BASE_URL}/api/Proposta/${userData.id}`, userData, {
+        headers: {
+            'Authorization': `Bearer ${apiCredentials?.token}`
+        }
+    });
 }
 
 

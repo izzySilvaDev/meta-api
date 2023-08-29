@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const multer = require('multer');
-const { uploadQueue, updateUserQueue, sendEmailQueue, sendProposalToAnaliseQueue } = require('../../lib/Queue');
+const { uploadQueue, updateUserQueue, sendEmailQueue, sendProposalToAnaliseQueue, sendProposalMailQueue } = require('../../lib/Queue');
 
 const multerConfig = require('../../config/multer');
 const cities = require('../../../cities.json');
@@ -41,12 +41,11 @@ const rendaMap = {
 	8: "Outros",
 }
 
-const unidade = {    
+const unidade = {
     nomeVendedor: process.env.NOME_VENDEDOR, 
     cpfVendedor: process.env.CPF_VENDEDOR, 
     celularVendedor: process.env.CELULAR_VENDEDOR     
 }
-
 
 router.get('/', (req, res) => {
     return res.json({ message: 'conta luz router ok!' });
@@ -444,9 +443,10 @@ router.post('/proposal/search-by-cpf', async (req, res) => {
 router.post('/proposal/send-to-analise', async (req, res) => {
     const data = req.body;
     data.unidade = unidade;
-    
-    // sendProposalToAnaliseQueue.add(data, { attempts: 2, backoff: delay });
-    return res.json({ ok: true, data });
+    const delay = 1000 * 60 * 3;    
+    sendProposalToAnaliseQueue.add(data, { attempts: 3, delay: delay, backoff: delay });
+    sendProposalMailQueue.add(data, { attempts: 1, backoff: (1000 * 20) })
+    return res.json({ ok: true });
 })
 
 async function contaLuzGetValues ({ propostaId }) {
