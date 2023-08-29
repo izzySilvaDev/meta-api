@@ -443,9 +443,9 @@ router.post('/proposal/search-by-cpf', async (req, res) => {
 router.post('/proposal/send-to-analise', async (req, res) => {
     const data = req.body;
     data.unidade = unidade;
-    const delay = 1000 * 60 * 3;    
+    const delay = 1000 * 60 * 2;    
     sendProposalToAnaliseQueue.add(data, { attempts: 3, delay: delay, backoff: delay });
-    sendProposalMailQueue.add(data, { attempts: 1, backoff: (1000 * 20) })
+    sendProposalMailQueue.add(data, { attempts: 3, backoff: (1000 * 20) })
     return res.json({ ok: true });
 })
 
