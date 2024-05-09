@@ -10,13 +10,18 @@ const sendProposalToAnaliseJob = require('../jobs/SendProposalToAnaliseJob');
 
 const sendProposalMailJob = require('../jobs/sendProposalMail');
 
+// const redisConfig = {
+//     redis: {
+//         port: process.env.REDIS_PORT, 
+//         host: process.env.REDIS_HOST,
+//         username: process.env.REDIS_USERNAME,
+//         password: process.env.REDIS_PASSWORD
+//     }
+// }
+
 const redisConfig = {
-    redis: {
-        port: process.env.REDIS_PORT, 
-        host: process.env.REDIS_HOST,
-        username: process.env.REDIS_USERNAME,
-        password: process.env.REDIS_PASSWORD
-    }
+    host: '127.0.0.1',
+    port: 6379
 }
 
 const uploadQueue = new Queue(ImageUploadJob.key, redisConfig);
