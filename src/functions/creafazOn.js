@@ -6,7 +6,7 @@ const CRIVE_BASE_URL = process.env.CRIVE_BASE_URL
 
 const apiCredentials = {};
 
-function verifyToken() {
+function verifyToken() {  
   if(!apiCredentials.token) throw new Error('invalid request!');
   const currentDay = new Date();
   const expiresDay = new Date(apiCredentials.expires);
@@ -19,9 +19,8 @@ async function login(authData) {
   });
 
   if (data) {
-    const expiresDay = data.data.expires.split('T')[0];
     apiCredentials.token = data.data.token;
-    apiCredentials.expires = expiresDay.replace(/-/g, '/');
+    apiCredentials.expires = data.data.expires;
   }
   return data;
 }

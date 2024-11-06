@@ -56,6 +56,7 @@ router.get('/proposal/:id', async (req, res) => {
     const data = await getProposalById({ proposalId: id });
     res.json({ data });
   } catch (error) {
+    console.log({ error });    
     res.status(400).json({ message: 'Invalid request' });
   }
 });
