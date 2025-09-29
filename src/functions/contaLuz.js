@@ -170,7 +170,7 @@ function normalizeData(userInfoObj) {
     // "bairro": userInfoObj.bairro,
     // "logradouro": userInfoObj.logradouro,
     cep: userInfoObj.cep,
-    urlNotificacaoParceiro: `${API_BASE_URL}/api/conta-luz/acompanhamento`,
+    urlNotificacaoParceiro: `${API_BASE_URL}/webhook`,
   };
 }
 

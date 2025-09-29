@@ -20,8 +20,6 @@ const corsOptions = {
         else if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true)
         } else {
-            console.log('origin', origin);
-            
             callback(new Error('Not allowed by CORS', { cause: "cors"}), false);
         }
     },
@@ -32,12 +30,20 @@ app.use(helmet());
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '30mb' }));
 app.use(express.urlencoded({ extended: true }))
-app.use(cors(corsOptions));
 app.use(morgan('dev'))
+
+// routes without cors
+router.post('/webhook', (req, res) => {
+  console.log('webhook', req.body);
+  return res.json({ ok: true });
+});
 
 app.get('/', (req, res) => {
     res.json({ ok: true })
-})
+});
+
+// all routes below have cors
+app.use(cors(corsOptions));
 
 app.use('/api/', api);
 

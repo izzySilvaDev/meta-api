@@ -341,11 +341,6 @@ router.post(
   }
 );
 
-router.post('/acompanhamento', (req, res) => {
-  console.log('webhook', req.body);
-  return res.json({ ok: true });
-});
-
 router.get('/proposal/search/:id', async (req, res) => {
   const { id } = req.params;
   try {
