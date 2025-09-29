@@ -1,5 +1,5 @@
 require('dotenv').config();
-const Mail = require('../modules/nodemailer');
+const { sendEmailWithTemplate } = require('../modules/zeptomail');
 
 async function sendMail({ nome, cpf, nascimento, email, whatsApp, estado, cidade, cep, renda, compahia, valor, files } = {}) {
 
@@ -15,7 +15,8 @@ async function sendMail({ nome, cpf, nascimento, email, whatsApp, estado, cidade
         mailData.attachments = files.map((file) => ({ filename: file.originalname, path: file.path }));
     }
 
-    await Mail.sendMail(mailData);
+    await sendEmailWithTemplate(mailData, 'newUser');
+
 }
 
 module.exports = { sendMail };
