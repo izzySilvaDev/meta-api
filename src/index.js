@@ -33,7 +33,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(morgan('dev'))
 
 // routes without cors
-router.post('/webhook', (req, res) => {
+app.post('/webhook', (req, res) => {
   console.log('webhook', req.body);
   return res.json({ ok: true });
 });
