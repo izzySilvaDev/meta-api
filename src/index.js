@@ -20,6 +20,8 @@ const corsOptions = {
         else if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true)
         } else {
+            console.log('origin', origin);
+            
             callback(new Error('Not allowed by CORS', { cause: "cors"}), false);
         }
     },
