@@ -10,19 +10,19 @@ const sendProposalToAnaliseJob = require('../jobs/SendProposalToAnaliseJob');
 
 const sendProposalMailJob = require('../jobs/sendProposalMail');
 
-// const redisConfig = {
-//     redis: {
-//         port: process.env.REDIS_PORT, 
-//         host: process.env.REDIS_HOST,
-//         username: process.env.REDIS_USERNAME,
-//         password: process.env.REDIS_PASSWORD
-//     }
-// }
-
 const redisConfig = {
-    host: '127.0.0.1',
-    port: 6379
+    redis: {
+        port: process.env.REDIS_PORT, 
+        host: process.env.REDIS_HOST,
+        username: process.env.REDIS_USERNAME,
+        password: process.env.REDIS_PASSWORD
+    }
 }
+
+// const redisConfig = {
+//     host: '127.0.0.1',
+//     port: 6379
+// }
 
 const uploadQueue = new Queue(ImageUploadJob.key, redisConfig);
 
@@ -96,6 +96,10 @@ sendEmailQueue.on('completed', (job) => {
 sendEmailQueue.on('failed', (job, error) => {
     console.log('email job failed', error, job.data);
 })
+
+sendEmailQueue.on("error", function(error) {
+    console.log("Error in email queue: " + error);
+});
 
 sendProposalToAnaliseQueue.on('completed', (job) => {
     console.log('send Proposal To Analise job completed', job.data?.id);
