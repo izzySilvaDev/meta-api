@@ -19,11 +19,6 @@ const redisConfig = {
     }
 }
 
-// const redisConfig = {
-//     host: '127.0.0.1',
-//     port: 6379
-// }
-
 const uploadQueue = new Queue(ImageUploadJob.key, redisConfig);
 
 const updateUserQueue = new Queue(updateUserJob.key, redisConfig);

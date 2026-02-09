@@ -19,6 +19,7 @@
     "bull": "^4.10.4",
     "concurrently": "^7.6.0",
     "connect-ensure-login": "^0.1.1",
+    "connect-redis": "^9.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
     "ejs": "^4.0.1",

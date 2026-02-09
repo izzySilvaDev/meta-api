@@ -11,6 +11,9 @@ const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const { ensureLoggedIn } = require('connect-ensure-login');
+const { RedisStore } = require('connect-redis');
+const { createClient } = require('redis');
+
 
 const {
   uploadQueue,
@@ -28,6 +31,11 @@ const app = express();
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/ui");
+
+const redisClient = createClient({
+  url: `redis://${process.env.REDIS_HOST || '127.0.0.1'}:${process.env.REDIS_PORT || 6379}`,
+});
+redisClient.connect().catch(err => console.error('Redis error', err));
 
 createBullBoard({
   queues: [
@@ -102,9 +110,20 @@ app.use(morgan("dev"));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
-app.use(session({ secret: 'keyboard cat', saveUninitialized: true, resave: true }));
-app.use(passport.initialize({}));
-app.use(passport.session({}));
+app.use(session({
+  store: new RedisStore({ client: redisClient }),
+  secret: process.env.SESSION_SECRET || 'troque_para_um_valor_secreto',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: !development,      // true em produção (HTTPS)
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // routes without cors
 app.post("/webhook", (req, res) => {
@@ -115,9 +134,6 @@ app.post("/webhook", (req, res) => {
 app.get("/", (req, res) => {
   res.json({ ok: true });
 });
-
-// all routes below have cors
-app.use(cors(corsOptions));
 
 app.get('/ui/login', (req, res) => {
 	res.render('login', { invalid: req.query.invalid === 'true' });
@@ -132,6 +148,9 @@ app.post(
 );
 
 app.use('/ui', ensureLoggedIn({ redirectTo: '/ui/login' }), serverAdapter.getRouter());
+
+// all routes below have cors
+app.use(cors(corsOptions));
 
 app.use("/api/", api);
 
