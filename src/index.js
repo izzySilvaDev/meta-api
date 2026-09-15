@@ -1,3 +1,6 @@
+require("dotenv").config();
+require("./lib/http");
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -12,9 +15,8 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const { ensureLoggedIn } = require('connect-ensure-login');
 const { RedisStore } = require('connect-redis');
-const { createClient } = require('redis');
 
-
+const { createSessionRedisClient } = require("./lib/redis");
 const {
   uploadQueue,
   updateUserQueue,
@@ -22,9 +24,8 @@ const {
   sendEmailQueue,
   sendProposalToAnaliseQueue,
   sendProposalMailQueue,
+  closeQueues,
 } = require("./lib/Queue");
-
-require("dotenv").config();
 
 
 const app = express();
@@ -32,10 +33,8 @@ const app = express();
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/ui");
 
-const redisClient = createClient({
-  url: `redis://${process.env.REDIS_HOST || '127.0.0.1'}:${process.env.REDIS_PORT || 6379}`,
-});
-redisClient.connect().catch(err => console.error('Redis error', err));
+const redisClient = createSessionRedisClient();
+redisClient.connect().catch(err => console.error('Redis sessão: falha na conexão inicial', err.message));
 
 createBullBoard({
   queues: [
@@ -164,4 +163,31 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, console.log(`app is running ${PORT}`));
+const server = app.listen(PORT, () => console.log(`app is running ${PORT}`));
+
+let isShuttingDown = false;
+
+async function shutdown(signal) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`${signal} recebido, encerrando API...`);
+
+  await new Promise((resolve) => server.close(resolve));
+  await closeQueues();
+
+  try {
+    if (redisClient.isOpen) {
+      await redisClient.quit();
+    }
+  } catch (err) {
+    console.error('Erro ao fechar Redis sessão:', err.message);
+  }
+
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('unhandledRejection', (reason) => {
+  console.error('UnhandledRejection:', reason);
+});

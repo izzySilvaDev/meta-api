@@ -9,45 +9,51 @@ const REFRESH_TOKEN = process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
 const FOLDER_PARENT_ID = process.env.GOOGLE_DRIVE_FOLDER_PARENT_ID;
 
 async function uploadImageToDrive({ filesArray, folderName = 'conta-luz-client-image', userData = {} }) {
+  if (!filesArray?.length) return;
 
-    if(!filesArray.length) return; 
+  const oauth = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
+  oauth.setCredentials({ refresh_token: REFRESH_TOKEN });
 
-    const oauth = new google.auth.OAuth2( CLIENT_ID, CLIENT_SECRET );
-    oauth.setCredentials({ refresh_token: REFRESH_TOKEN });
+  const drive = google.drive({
+    version: 'v3',
+    auth: oauth,
+  });
 
-    const drive = google.drive({
-        version: "v3",
-        auth: oauth,        
-    })
+  const fileMetadata = {
+    name: folderName,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: [FOLDER_PARENT_ID],
+  };
 
-    const fileMetadata = {
-        name: folderName,
-        mimeType: 'application/vnd.google-apps.folder',
-        parents: [FOLDER_PARENT_ID],
-    };
+  const folder = await drive.files.create({
+    resource: fileMetadata,
+    fields: 'id',
+  });
 
-    const folder = await drive.files.create({
-        resource: fileMetadata,
-        fields: 'id',
-    });
+  for (const imageData of filesArray) {
+    const filePath = path.resolve(__dirname, '..', '..', 'tmp', 'uploads', imageData.filename);
+    const body = fs.createReadStream(filePath);
 
-    for await (const imagaData of filesArray) {
-        drive.files.create({
-            requestBody: {
-                name: imagaData.filename,
-                mimeType: imagaData.mimeType,
-                parents: [folder.data.id]
-            },
-            media: {
-                mimeType: imagaData.mimeType,
-                body: fs.createReadStream(path.resolve(__dirname, '..', '..', 'tmp', 'uploads', imagaData.filename)),
-            }
-        });            
-    }        
+    try {
+      await drive.files.create({
+        requestBody: {
+          name: imageData.filename,
+          mimeType: imageData.mimeType,
+          parents: [folder.data.id],
+        },
+        media: {
+          mimeType: imageData.mimeType,
+          body,
+        },
+      });
+    } finally {
+      if (!body.destroyed) {
+        body.destroy();
+      }
+    }
+  }
 
-    userData.documentos = `https://drive.google.com/drive/folders/${folder.data.id}`;
-    
+  userData.documentos = `https://drive.google.com/drive/folders/${folder.data.id}`;
 }
-
 
 module.exports = { uploadImageToDrive };
