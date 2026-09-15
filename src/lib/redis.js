@@ -32,8 +32,14 @@ function getIoredisOptions() {
   });
 }
 
-function createIoredisClient(label) {
+function createIoredisClient(label, { maxListeners } = {}) {
   const client = new Redis(getIoredisOptions());
+
+  // Filas Bull compartilham o mesmo Commander; cada uma adiciona 'error'.
+  // Isso não é leak — o default do Node (10) fica curto nesse padrão.
+  if (maxListeners) {
+    client.setMaxListeners(maxListeners);
+  }
 
   client.on('error', (err) => {
     console.error(`${label}:`, err.message);

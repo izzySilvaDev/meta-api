@@ -10,8 +10,9 @@ const sendProposalToAnaliseJob = require('../jobs/SendProposalToAnaliseJob');
 const sendProposalMailJob = require('../jobs/sendProposalMail');
 const { createIoredisClient } = require('./redis');
 
-const sharedClient = createIoredisClient('Bull Redis client');
-const sharedSubscriber = createIoredisClient('Bull Redis subscriber');
+// Cada fila adiciona listeners 'error' no Commander compartilhado (ioredis).
+const sharedClient = createIoredisClient('Bull Redis client', { maxListeners: 32 });
+const sharedSubscriber = createIoredisClient('Bull Redis subscriber', { maxListeners: 32 });
 const blockingClients = [];
 
 const queueOptions = {
